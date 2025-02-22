@@ -1,24 +1,18 @@
 import os
 import cv2
 import mediapipe as mp
+from mediapipe import solutions as mp_solutions
+hands = mp_solutions.hands.Hands(static_image_mode=False, max_num_hands=1, min_detection_confidence=0.7)
+drawing_utils = mp_solutions.drawing_utils
+
 import pickle
 import numpy as np
-from sklearn.model_selection import train_test_split, GridSearchCV
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, confusion_matrix
 import matplotlib.pyplot as plt
 import seaborn as sns
 from imutils import paths
-from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from tensorflow.keras.applications import MobileNetV2
-from tensorflow.keras.layers import AveragePooling2D, Dense, Flatten, Input
-from tensorflow.keras.models import Model
-from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
-from tensorflow.keras.preprocessing.image import img_to_array, load_img
-from tensorflow.keras.utils import to_categorical
 from sklearn.preprocessing import LabelEncoder
-from sklearn.model_selection import StratifiedKFold
 import time
 
 # Constants
@@ -45,7 +39,7 @@ def create_folders():
 # Image Capture with Validation
 def capture_images():
     cap = cv2.VideoCapture(0)
-    print(f"Press a number (0-{len(GESTURES) - 1}) to save gesture image, 'q' to quit.")
+    print(f"Press a number (0-{len(GESTURES) - 1}) to save gesture image, 'q' to quit, 'd' to delete the last image.")
     image_count = {sanitize_gesture_name(gesture): len(os.listdir(os.path.join("gesture_images", sanitize_gesture_name(gesture)))) for gesture in GESTURES}
 
     while True:
@@ -53,11 +47,11 @@ def capture_images():
         if not ret:
             break
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        results = mp_hands.Hands(static_image_mode=False, max_num_hands=1, min_detection_confidence=0.7).process(frame_rgb)
+        results = hands.process(frame_rgb)
 
         if results.multi_hand_landmarks:
             for hand_landmarks in results.multi_hand_landmarks:
-                mp.solutions.drawing_utils.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
+                drawing_utils.draw_landmarks(frame, hand_landmarks, mp_solutions.hands.HAND_CONNECTIONS)
 
         cv2.imshow("Capture Gestures", frame)
         key = cv2.waitKey(1) & 0xFF
@@ -65,14 +59,14 @@ def capture_images():
         if key in [ord(str(i)) for i in range(len(GESTURES))]:
             gesture_idx = int(chr(key))
             gesture_name = GESTURES[gesture_idx]
-            sanitized_gesture_name = sanitize_gesture_name(gesture_name)
+            sanitized_gesture_name = sanitize_gesture_name(gesture_name) if gesture_name else ""
             folder_path = os.path.join("gesture_images", sanitized_gesture_name)
 
             if image_count[sanitized_gesture_name] >= NUM_IMAGES_PER_GESTURE:
                 print(f"Already collected {NUM_IMAGES_PER_GESTURE} images for '{gesture_name}'.")
                 continue
 
-            img_path = os.path.join(folder_path, f"{sanitized_gesture_name}_{image_count[sanitized_gesture_name]}.jpg")
+            img_path = os.path.join(folder_path, f"{sanitized_gesture_name}_{image_count[sanitized_gesture_name]}.jpg") if sanitized_gesture_name else ""
             cv2.imwrite(img_path, frame)
             image_count[sanitized_gesture_name] += 1
             print(f"Saved: {img_path}")
@@ -82,9 +76,9 @@ def capture_images():
 
         elif key == ord('q'):
             break
-        elif key == ord('d'): #Delete last image that was taken.
+        elif key == ord('d'):  # Delete last image that was taken.
             if image_count[sanitized_gesture_name] > 0:
-                image_count[sanitized_gesture_name] -=1;
+                image_count[sanitized_gesture_name] -= 1
                 os.remove(img_path)
                 print(f'deleted {img_path}')
 
@@ -93,6 +87,16 @@ def capture_images():
 
 # Model Training (MobileNetV2 with Transfer Learning)
 def train_model():
+    import tensorflow as tf
+    from tensorflow.keras.preprocessing.image import ImageDataGenerator, img_to_array, load_img
+    from tensorflow.keras.applications import MobileNetV2
+    from tensorflow.keras.layers import AveragePooling2D, Dense, Flatten, Input
+    from tensorflow.keras.models import Model
+    from tensorflow.keras.optimizers import Adam
+    from tensorflow.keras import backend as K
+    from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
+    from tensorflow.keras.utils import to_categorical
+
     image_paths = list(paths.list_images("gesture_images"))
     data, labels = [], []
     label_encoder = LabelEncoder()
@@ -120,7 +124,8 @@ def train_model():
     for layer in base_model.layers:
         layer.trainable = False
 
-    opt = Adam(lr=LEARNING_RATE)
+    opt = Adam(learning_rate=LEARNING_RATE)
+
     model.compile(loss="categorical_crossentropy", optimizer=opt, metrics=["accuracy"])
 
     train_datagen = ImageDataGenerator(rotation_range=20, zoom_range=0.15, width_shift_range=0.2, height_shift_range=0.2, shear_range=0.15, horizontal_flip=True, fill_mode="nearest")
