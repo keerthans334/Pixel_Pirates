@@ -1,11 +1,8 @@
 import os
 import cv2
 import mediapipe as mp
-from mediapipe import solutions as mp_solutions
-hands = mp_solutions.hands.Hands(static_image_mode=False, max_num_hands=1, min_detection_confidence=0.7)
-drawing_utils = mp_solutions.drawing_utils
-
-import pickle
+from mediapipe.tasks import python
+from mediapipe.tasks.python import vision
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, confusion_matrix
@@ -13,20 +10,41 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from imutils import paths
 from sklearn.preprocessing import LabelEncoder
-import time
+import tensorflow as tf
+from tensorflow.keras.preprocessing.image import ImageDataGenerator, img_to_array, load_img
+from tensorflow.keras.applications import MobileNetV2
+from tensorflow.keras.layers import Dense, GlobalAveragePooling2D, Input
+from tensorflow.keras.models import Model
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
+from tensorflow.keras.utils import to_categorical
 
-# Constants
-GESTURES = ["Hi, how are you?", "Hey, can you please help me?", "Hey, I need some water.",
-            "Hey, good job!", "I love you.", "Bye.", "What is your name?", "Yes, I agree."]
-IMAGE_SIZE = (224, 224)  # Size for MobileNetV2
-NUM_IMAGES_PER_GESTURE = 100  # Increased dataset size
+# Image and model constants
+IMAGE_SIZE = (224, 224)
+NUM_IMAGES_PER_GESTURE = 100
 TEST_SIZE = 0.2
 RANDOM_STATE = 42
 LEARNING_RATE = 1e-4
 EPOCHS = 20
 BATCH_SIZE = 32
 
-# Sanitization and Folder Creation
+# Gesture categories
+GESTURES = [
+    "Bye",
+    "Hey can you please help me",
+    "Hey good job!",
+    "Hey I need some water",
+    "Hi how are you",
+    "I love you",
+    "What is your name",
+    "Yes I agree"
+]
+
+# Initialize MediaPipe Hand Landmarker
+base_options = python.BaseOptions(model_asset_path='hand_landmarker.task')
+options = vision.HandLandmarkerOptions(base_options=base_options, num_hands=1)
+hand_landmarker = vision.HandLandmarker.create_from_options(options)
+
 def sanitize_gesture_name(gesture_name):
     return gesture_name.replace(",", "").replace("?", "").replace(" ", "_")
 
@@ -36,22 +54,26 @@ def create_folders():
         sanitized_gesture = sanitize_gesture_name(gesture)
         os.makedirs(os.path.join("gesture_images", sanitized_gesture), exist_ok=True)
 
-# Image Capture with Validation
 def capture_images():
     cap = cv2.VideoCapture(0)
     print(f"Press a number (0-{len(GESTURES) - 1}) to save gesture image, 'q' to quit, 'd' to delete the last image.")
-    image_count = {sanitize_gesture_name(gesture): len(os.listdir(os.path.join("gesture_images", sanitize_gesture_name(gesture)))) for gesture in GESTURES}
+    image_count = {sanitize_gesture_name(gesture): 0 for gesture in GESTURES}
+    current_gesture = None
 
     while True:
         ret, frame = cap.read()
         if not ret:
             break
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        results = hands.process(frame_rgb)
+        mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame_rgb)
+        results = hand_landmarker.detect(mp_image)
 
         if results.multi_hand_landmarks:
             for hand_landmarks in results.multi_hand_landmarks:
-                drawing_utils.draw_landmarks(frame, hand_landmarks, mp_solutions.hands.HAND_CONNECTIONS)
+                for landmark in hand_landmarks:
+                    x = int(landmark.x * frame.shape[1])
+                    y = int(landmark.y * frame.shape[0])
+                    cv2.circle(frame, (x, y), 5, (0, 255, 0), -1)
 
         cv2.imshow("Capture Gestures", frame)
         key = cv2.waitKey(1) & 0xFF
@@ -59,44 +81,38 @@ def capture_images():
         if key in [ord(str(i)) for i in range(len(GESTURES))]:
             gesture_idx = int(chr(key))
             gesture_name = GESTURES[gesture_idx]
-            sanitized_gesture_name = sanitize_gesture_name(gesture_name) if gesture_name else ""
-            folder_path = os.path.join("gesture_images", sanitized_gesture_name)
+            sanitized_gesture = sanitize_gesture_name(gesture_name)
+            folder_path = os.path.join("gesture_images", sanitized_gesture)
+            current_gesture = sanitized_gesture
 
-            if image_count[sanitized_gesture_name] >= NUM_IMAGES_PER_GESTURE:
+            if image_count[sanitized_gesture] >= NUM_IMAGES_PER_GESTURE:
                 print(f"Already collected {NUM_IMAGES_PER_GESTURE} images for '{gesture_name}'.")
                 continue
 
-            img_path = os.path.join(folder_path, f"{sanitized_gesture_name}_{image_count[sanitized_gesture_name]}.jpg") if sanitized_gesture_name else ""
+            img_path = os.path.join(folder_path, f"{sanitized_gesture}_{image_count[sanitized_gesture]}.jpg")
             cv2.imwrite(img_path, frame)
-            image_count[sanitized_gesture_name] += 1
+            image_count[sanitized_gesture] += 1
             print(f"Saved: {img_path}")
 
-            if image_count[sanitized_gesture_name] == NUM_IMAGES_PER_GESTURE:
+            if image_count[sanitized_gesture] == NUM_IMAGES_PER_GESTURE:
                 print(f"Collected {NUM_IMAGES_PER_GESTURE} images for '{gesture_name}'.")
 
         elif key == ord('q'):
             break
-        elif key == ord('d'):  # Delete last image that was taken.
-            if image_count[sanitized_gesture_name] > 0:
-                image_count[sanitized_gesture_name] -= 1
-                os.remove(img_path)
-                print(f'deleted {img_path}')
+        elif key == ord('d'):
+            if current_gesture and image_count[current_gesture] > 0:
+                image_count[current_gesture] -= 1
+                img_path = os.path.join("gesture_images", current_gesture, f"{current_gesture}_{image_count[current_gesture]}.jpg")
+                if os.path.exists(img_path):
+                    os.remove(img_path)
+                    print(f'Deleted {img_path}')
+                else:
+                    print(f"Warning: Image {img_path} not found.")
 
     cap.release()
     cv2.destroyAllWindows()
 
-# Model Training (MobileNetV2 with Transfer Learning)
 def train_model():
-    import tensorflow as tf
-    from tensorflow.keras.preprocessing.image import ImageDataGenerator, img_to_array, load_img
-    from tensorflow.keras.applications import MobileNetV2
-    from tensorflow.keras.layers import AveragePooling2D, Dense, Flatten, Input
-    from tensorflow.keras.models import Model
-    from tensorflow.keras.optimizers import Adam
-    from tensorflow.keras import backend as K
-    from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
-    from tensorflow.keras.utils import to_categorical
-
     image_paths = list(paths.list_images("gesture_images"))
     data, labels = [], []
     label_encoder = LabelEncoder()
@@ -115,8 +131,7 @@ def train_model():
 
     base_model = MobileNetV2(weights="imagenet", include_top=False, input_tensor=Input(shape=(224, 224, 3)))
     head_model = base_model.output
-    head_model = AveragePooling2D(pool_size=(7, 7))(head_model)
-    head_model = Flatten(name="flatten")(head_model)
+    head_model = GlobalAveragePooling2D()(head_model)
     head_model = Dense(128, activation="relu")(head_model)
     head_model = Dense(len(GESTURES), activation="softmax")(head_model)
     model = Model(inputs=base_model.input, outputs=head_model)
@@ -125,7 +140,6 @@ def train_model():
         layer.trainable = False
 
     opt = Adam(learning_rate=LEARNING_RATE)
-
     model.compile(loss="categorical_crossentropy", optimizer=opt, metrics=["accuracy"])
 
     train_datagen = ImageDataGenerator(rotation_range=20, zoom_range=0.15, width_shift_range=0.2, height_shift_range=0.2, shear_range=0.15, horizontal_flip=True, fill_mode="nearest")
@@ -148,10 +162,8 @@ def train_model():
     plt.title("Confusion Matrix")
     plt.show()
 
-    model.save("gesture_model.h5")
-    print("Model saved as gesture_model.h5.")
+    model.save("gesture_model.keras")
+    print("Model saved as gesture_model.keras.")
 
-if __name__ == "__main__":
-    create_folders()
-    capture_images()
-    train_model()
+def get_user_choice():
+    print("\nChoose an option:")
