@@ -68,15 +68,16 @@ def capture_images():
         mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame_rgb)
         results = hand_landmarker.detect(mp_image)
 
-        if results.multi_hand_landmarks:
-            for hand_landmarks in results.multi_hand_landmarks:
-                for landmark in hand_landmarks:
+        if results.hand_landmarks: # correct attribute
+            for hand_landmarks_list in results.hand_landmarks: # iterate through the list of lists.
+                for landmark in hand_landmarks_list: # iterate through the landmark objects.
                     x = int(landmark.x * frame.shape[1])
                     y = int(landmark.y * frame.shape[0])
                     cv2.circle(frame, (x, y), 5, (0, 255, 0), -1)
 
         cv2.imshow("Capture Gestures", frame)
         key = cv2.waitKey(1) & 0xFF
+
 
         if key in [ord(str(i)) for i in range(len(GESTURES))]:
             gesture_idx = int(chr(key))
