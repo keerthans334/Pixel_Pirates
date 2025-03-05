@@ -3,48 +3,133 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Handspeak Interface</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>Handspeak Gesture Recognition</title>
+    <style>
+        body {
+            background-color: #f0f0f0;
+            text-align: center;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            margin-top: 50px;
+        }
+
+        .btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px 32px;
+            margin: 10px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background-color: #45a049;
+        }
+
+        video {
+            width: 100%;
+            max-width: 600px;
+            border: 2px solid black;
+        }
+    </style>
 </head>
 <body>
-    <div class="main-container">
-        <h1>Handspeak - Gesture to Speech and Speech to Text</h1>
-        <div class="buttons-container">
-            <button class="action-btn" id="trainBtn">Train</button>
-            <button class="action-btn" id="recognizeBtn">Real-Time Recognition (Convey)</button>
-            <button class="action-btn" id="listenBtn">Speech Recognition (Listen)</button>
-            <button class="action-btn" id="clearCacheBtn">Clear Cache</button>
-        </div>
-    </div>
 
-    <!-- Modal windows for training and other features -->
-    <div class="modal" id="trainModal">
-        <div class="modal-content">
-            <span class="close-btn" id="closeTrainModal">&times;</span>
-            <h2>Train Gestures</h2>
-            <button id="trainWithSavedGestures">Train with Saved Gestures</button>
-            <button id="addNewGestures">Add New Gestures</button>
-        </div>
-    </div>
+<div class="container">
+    <h1>Handspeak Gesture Recognition</h1>
+    <button class="btn" id="train-btn">Train Model</button>
+    <button class="btn" id="real-time-btn">Real-Time Recognition</button>
+    <button class="btn" id="speech-btn">Speech Recognition</button>
+    <button class="btn" id="clear-cache-btn">Clear Cache</button>
 
-    <div class="modal" id="recognizeModal">
-        <div class="modal-content">
-            <span class="close-btn" id="closeRecognizeModal">&times;</span>
-            <h2>Real-Time Gesture Recognition</h2>
-            <button id="startRecognitionBtn">Start Recognition</button>
-            <div id="gestureHistory"></div>
-        </div>
-    </div>
+    <div id="gesture-result"></div>
+    <div id="speech-result"></div>
+    <video id="video" autoplay></video>
+</div>
 
-    <div class="modal" id="listenModal">
-        <div class="modal-content">
-            <span class="close-btn" id="closeListenModal">&times;</span>
-            <h2>Speech Recognition</h2>
-            <button id="speakBtn">Speak</button>
-            <div id="speechText"></div>
-        </div>
-    </div>
+<script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+<script>
+    var socket = io.connect('http://localhost:5000');
 
-    <script src="script.js"></script>
+    // Accessing webcam stream
+    const videoElement = document.getElementById('video');
+    const mediaStream = navigator.mediaDevices.getUserMedia({ video: true });
+    mediaStream.then((stream) => {
+        videoElement.srcObject = stream;
+    });
+
+    // Train model button click
+    document.getElementById('train-btn').addEventListener('click', function () {
+        fetch('/train_model', {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => alert(data.message));
+    });
+
+    // Real-time recognition button click
+    document.getElementById('real-time-btn').addEventListener('click', function () {
+        // Capture video frame and send to backend for gesture recognition
+        setInterval(() => {
+            captureFrame();
+        }, 100);
+    });
+
+    // Capture the video frame and send it to the backend via WebSocket
+    function captureFrame() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 224;
+        canvas.height = 224;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+        const frameData = canvas.toDataURL();  // Get base64 image data
+        socket.emit('video_stream', { frame: frameData });
+    }
+
+    socket.on('gesture_recognition', (data) => {
+        const result = document.getElementById('gesture-result');
+        result.innerHTML = `Gesture: ${data.gesture}, Confidence: ${data.confidence}`;
+    });
+
+    // Speech recognition button click
+    document.getElementById('speech-btn').addEventListener('click', function () {
+        // Capture microphone input and send to backend for speech recognition
+        startSpeechRecognition();
+    });
+
+    function startSpeechRecognition() {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const analyser = audioContext.createAnalyser();
+        const microphone = navigator.mediaDevices.getUserMedia({ audio: true });
+
+        microphone.then(function (stream) {
+            const source = audioContext.createMediaStreamSource(stream);
+            source.connect(analyser);
+            
+            // Send the audio data to the server via WebSocket (for real-time recognition)
+            socket.emit('speech_stream', { audio: stream });
+        });
+    }
+
+    socket.on('speech_recognition', (data) => {
+        const result = document.getElementById('speech-result');
+        result.innerHTML = `Recognized Text: ${data.text}`;
+    });
+
+    // Clear cache button click
+    document.getElementById('clear-cache-btn').addEventListener('click', function () {
+        fetch('/clear_cache', {
+            method: 'GET'
+        })
+        .then(response => response.json())
+        .then(data => alert(data.message));
+    });
+</script>
 </body>
 </html>
