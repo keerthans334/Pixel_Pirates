@@ -1,15 +1,15 @@
 create an interactive dynamic web interface for my project handspeak which translates hand gestures into speech and voice recognition into text in realtime ..
-the main web page must contain  action buttons 
-1. train 
-when i click this button new web page must open it should show all the gestures which are trained and it should show the option 
-1.1  train model with already saved gestures 
+the main web page must contain  action buttons 
+1. train 
+when i click this button new web page must open it should show all the gestures which are trained and it should show the option 
+1.1  train model with already saved gestures 
 1.2 change gesture images for the saved gestures
-1.3  add new gestures and train them (each gesture must be trained with 100 gesture images and it should show the count of gestures that are trained at bellow)
- once the user click option 1.1 or 1.3 it should open gesture capture window and below it should prompt three option
+1.3  add new gestures and train them (each gesture must be trained with 100 gesture images and it should show the count of gestures that are trained at bellow)
+ once the user click option 1.1 or 1.3 it should open gesture capture window and below it should prompt three option
 a. delete the last captured image and hence train it again
 b. see the last captured gestured gesture image
 c. (after training all the gestures quit)
-once the model is trained it should the the accuracy of trained model and display the confusion matrix the web  page must contain move back button at top to jump back to the main web page
+once the model is trained it should the the accuracy of trained model and display the confusion matrix the web  page must contain move back button at top to jump back to the main web page
 at last once the gesture is trained it should display the gestures are trained succesfully
 2. realtime recognition (convey)
 when the user clicks this button a new web page must open it should open the display window it should contain an button called start recognition when th user clicks it the gesture recofnition window will open it will capture the hand gesture and fetch the data from pre-trained directory for which the gestures are trained using train model it will match the hand gestures from trained gesture directory and translate that hand gesture into text paralley speaking out the gesture the text will be displayed below
@@ -18,17 +18,17 @@ a. increase confidence threshould
 b. decrease confidence threshould
 c. switch to verbose mode
 d. displly the history of gestures recognised
-the web  page must contain move back button at top to jump back to the main web page
+the web  page must contain move back button at top to jump back to the main web page
 3. speech recognition ( listen)
-   when the user clicks this button a new web page must obtain it should prompt a button called speak when the user prees this button it should take the voice input and convert it to text and display below
-when the voice is not audible it sholud prompt speak again not audible 
-the web  page must contain move back button at top to jump back to the main web page
+   when the user clicks this button a new web page must obtain it should prompt a button called speak when the user prees this button it should take the voice input and convert it to text and display below
+when the voice is not audible it sholud prompt speak again not audible 
+the web  page must contain move back button at top to jump back to the main web page
 4. clear cache
 when the user clicks this buttons it will remove all the cache files from project directory and make it efficient
 no need to create new web page for this..
-it should show the amount of cache files gathered and ask user for reconfirmation to clear the gathered cache files 
+it should show the amount of cache files gathered and ask user for reconfirmation to clear the gathered cache files 
 ahter clearing it should display the size of cache files deleated
-i have the backened python code created for my project you make the necessary chages to match the javascript file 
+i have the backened python code created for my project you make the necessary chages to match the javascript file 
 1. Train_model.py
 import os
 import cv2
@@ -62,14 +62,14 @@ BATCH_SIZE = 32
 
 # Gesture categories
 GESTURES = [
-    "Bye",
-    "Hey can you please help me",
-    "Hey good job!",
-    "Hey I need some water",
-    "Hi how are you",
-    "I love you",
-    "What is your name",
-    "Yes I agree"
+    "Bye",
+    "Hey can you please help me",
+    "Hey good job!",
+    "Hey I need some water",
+    "Hi how are you",
+    "I love you",
+    "What is your name",
+    "Yes I agree"
 ]
 
 # Initialize MediaPipe Hand Landmarker
@@ -78,128 +78,128 @@ options = vision.HandLandmarkerOptions(base_options=base_options, num_hands=1)
 hand_landmarker = vision.HandLandmarker.create_from_options(options)
 
 def sanitize_gesture_name(gesture_name):
-    return gesture_name.replace(",", "").replace("?", "").replace(" ", "_")
+    return gesture_name.replace(",", "").replace("?", "").replace(" ", "_")
 
 def create_folders():
-    os.makedirs("gesture_images", exist_ok=True)
-    for gesture in GESTURES:
-        sanitized_gesture = sanitize_gesture_name(gesture)
-        os.makedirs(os.path.join("gesture_images", sanitized_gesture), exist_ok=True)
+    os.makedirs("gesture_images", exist_ok=True)
+    for gesture in GESTURES:
+        sanitized_gesture = sanitize_gesture_name(gesture)
+        os.makedirs(os.path.join("gesture_images", sanitized_gesture), exist_ok=True)
 
 def capture_images():
-    cap = cv2.VideoCapture(0)
-    print(f"Press a number (0-{len(GESTURES) - 1}) to save gesture image, 'q' to quit, 'd' to delete the last image.")
-    image_count = {sanitize_gesture_name(gesture): 0 for gesture in GESTURES}
-    current_gesture = None
+    cap = cv2.VideoCapture(0)
+    print(f"Press a number (0-{len(GESTURES) - 1}) to save gesture image, 'q' to quit, 'd' to delete the last image.")
+    image_count = {sanitize_gesture_name(gesture): 0 for gesture in GESTURES}
+    current_gesture = None
 
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            break
-        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame_rgb)
-        results = hand_landmarker.detect(mp_image)
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
+        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame_rgb)
+        results = hand_landmarker.detect(mp_image)
 
-        if results.hand_landmarks: # correct attribute
-            for hand_landmarks_list in results.hand_landmarks: # iterate through the list of lists.
-                for landmark in hand_landmarks_list: # iterate through the landmark objects.
-                    x = int(landmark.x * frame.shape[1])
-                    y = int(landmark.y * frame.shape[0])
-                    cv2.circle(frame, (x, y), 5, (0, 255, 0), -1)
+        if results.hand_landmarks: # correct attribute
+            for hand_landmarks_list in results.hand_landmarks: # iterate through the list of lists.
+                for landmark in hand_landmarks_list: # iterate through the landmark objects.
+                    x = int(landmark.x * frame.shape[1])
+                    y = int(landmark.y * frame.shape[0])
+                    cv2.circle(frame, (x, y), 5, (0, 255, 0), -1)
 
-        cv2.imshow("Capture Gestures", frame)
-        key = cv2.waitKey(1) & 0xFF
+        cv2.imshow("Capture Gestures", frame)
+        key = cv2.waitKey(1) & 0xFF
 
 
-        if key in [ord(str(i)) for i in range(len(GESTURES))]:
-            gesture_idx = int(chr(key))
-            gesture_name = GESTURES[gesture_idx]
-            sanitized_gesture = sanitize_gesture_name(gesture_name)
-            folder_path = os.path.join("gesture_images", sanitized_gesture)
-            current_gesture = sanitized_gesture
+        if key in [ord(str(i)) for i in range(len(GESTURES))]:
+            gesture_idx = int(chr(key))
+            gesture_name = GESTURES[gesture_idx]
+            sanitized_gesture = sanitize_gesture_name(gesture_name)
+            folder_path = os.path.join("gesture_images", sanitized_gesture)
+            current_gesture = sanitized_gesture
 
-            if image_count[sanitized_gesture] >= NUM_IMAGES_PER_GESTURE:
-                print(f"Already collected {NUM_IMAGES_PER_GESTURE} images for '{gesture_name}'.")
-                continue
+            if image_count[sanitized_gesture] >= NUM_IMAGES_PER_GESTURE:
+                print(f"Already collected {NUM_IMAGES_PER_GESTURE} images for '{gesture_name}'.")
+                continue
 
-            img_path = os.path.join(folder_path, f"{sanitized_gesture}_{image_count[sanitized_gesture]}.jpg")
-            cv2.imwrite(img_path, frame)
-            image_count[sanitized_gesture] += 1
-            print(f"Saved: {img_path}")
+            img_path = os.path.join(folder_path, f"{sanitized_gesture}_{image_count[sanitized_gesture]}.jpg")
+            cv2.imwrite(img_path, frame)
+            image_count[sanitized_gesture] += 1
+            print(f"Saved: {img_path}")
 
-            if image_count[sanitized_gesture] == NUM_IMAGES_PER_GESTURE:
-                print(f"Collected {NUM_IMAGES_PER_GESTURE} images for '{gesture_name}'.")
+            if image_count[sanitized_gesture] == NUM_IMAGES_PER_GESTURE:
+                print(f"Collected {NUM_IMAGES_PER_GESTURE} images for '{gesture_name}'.")
 
-        elif key == ord('q'):
-            break
-        elif key == ord('d'):
-            if current_gesture and image_count[current_gesture] > 0:
-                image_count[current_gesture] -= 1
-                img_path = os.path.join("gesture_images", current_gesture, f"{current_gesture}_{image_count[current_gesture]}.jpg")
-                if os.path.exists(img_path):
-                    os.remove(img_path)
-                    print(f'Deleted {img_path}')
-                else:
-                    print(f"Warning: Image {img_path} not found.")
+        elif key == ord('q'):
+            break
+        elif key == ord('d'):
+            if current_gesture and image_count[current_gesture] > 0:
+                image_count[current_gesture] -= 1
+                img_path = os.path.join("gesture_images", current_gesture, f"{current_gesture}_{image_count[current_gesture]}.jpg")
+                if os.path.exists(img_path):
+                    os.remove(img_path)
+                    print(f'Deleted {img_path}')
+                else:
+                    print(f"Warning: Image {img_path} not found.")
 
-    cap.release()
-    cv2.destroyAllWindows()
+    cap.release()
+    cv2.destroyAllWindows()
 
 def train_model():
-    image_paths = list(paths.list_images("gesture_images"))
-    data, labels = [], []
-    label_encoder = LabelEncoder()
+    image_paths = list(paths.list_images("gesture_images"))
+    data, labels = [], []
+    label_encoder = LabelEncoder()
 
-    for image_path in image_paths:
-        label = image_path.split(os.path.sep)[-2]
-        image = load_img(image_path, target_size=IMAGE_SIZE)
-        image = img_to_array(image)
-        image = preprocess_input(image)
-        data.append(image)
-        labels.append(label)
+    for image_path in image_paths:
+        label = image_path.split(os.path.sep)[-2]
+        image = load_img(image_path, target_size=IMAGE_SIZE)
+        image = img_to_array(image)
+        image = preprocess_input(image)
+        data.append(image)
+        labels.append(label)
 
-    labels = label_encoder.fit_transform(labels)
-    labels = to_categorical(labels)
-    data = np.array(data)
+    labels = label_encoder.fit_transform(labels)
+    labels = to_categorical(labels)
+    data = np.array(data)
 
-    base_model = MobileNetV2(weights="imagenet", include_top=False, input_tensor=Input(shape=(224, 224, 3)))
-    head_model = base_model.output
-    head_model = GlobalAveragePooling2D()(head_model)
-    head_model = Dense(128, activation="relu")(head_model)
-    head_model = Dense(len(GESTURES), activation="softmax")(head_model)
-    model = Model(inputs=base_model.input, outputs=head_model)
+    base_model = MobileNetV2(weights="imagenet", include_top=False, input_tensor=Input(shape=(224, 224, 3)))
+    head_model = base_model.output
+    head_model = GlobalAveragePooling2D()(head_model)
+    head_model = Dense(128, activation="relu")(head_model)
+    head_model = Dense(len(GESTURES), activation="softmax")(head_model)
+    model = Model(inputs=base_model.input, outputs=head_model)
 
-    for layer in base_model.layers:
-        layer.trainable = False
+    for layer in base_model.layers:
+        layer.trainable = False
 
-    opt = Adam(learning_rate=LEARNING_RATE)
-    model.compile(loss="categorical_crossentropy", optimizer=opt, metrics=["accuracy"])
+    opt = Adam(learning_rate=LEARNING_RATE)
+    model.compile(loss="categorical_crossentropy", optimizer=opt, metrics=["accuracy"])
 
-    train_datagen = ImageDataGenerator(rotation_range=20, zoom_range=0.15, width_shift_range=0.2, height_shift_range=0.2, shear_range=0.15, horizontal_flip=True, fill_mode="nearest")
-    train_datagen.fit(data)
+    train_datagen = ImageDataGenerator(rotation_range=20, zoom_range=0.15, width_shift_range=0.2, height_shift_range=0.2, shear_range=0.15, horizontal_flip=True, fill_mode="nearest")
+    train_datagen.fit(data)
 
-    X_train, X_test, y_train, y_test = train_test_split(data, labels, test_size=TEST_SIZE, stratify=labels, random_state=RANDOM_STATE)
+    X_train, X_test, y_train, y_test = train_test_split(data, labels, test_size=TEST_SIZE, stratify=labels, random_state=RANDOM_STATE)
 
-    model.fit(train_datagen.flow(X_train, y_train, batch_size=BATCH_SIZE), steps_per_epoch=len(X_train) // BATCH_SIZE, validation_data=(X_test, y_test), validation_steps=len(X_test) // BATCH_SIZE, epochs=EPOCHS)
+    model.fit(train_datagen.flow(X_train, y_train, batch_size=BATCH_SIZE), steps_per_epoch=len(X_train) // BATCH_SIZE, validation_data=(X_test, y_test), validation_steps=len(X_test) // BATCH_SIZE, epochs=EPOCHS)
 
-    predictions = model.predict(X_test, batch_size=BATCH_SIZE)
-    predictions = np.argmax(predictions, axis=1)
-    y_test_decoded = np.argmax(y_test, axis=1)
+    predictions = model.predict(X_test, batch_size=BATCH_SIZE)
+    predictions = np.argmax(predictions, axis=1)
+    y_test_decoded = np.argmax(y_test, axis=1)
 
-    print("\nClassification Report:")
-    print(classification_report(y_test_decoded, predictions, target_names=[sanitize_gesture_name(gesture) for gesture in GESTURES]))
+    print("\nClassification Report:")
+    print(classification_report(y_test_decoded, predictions, target_names=[sanitize_gesture_name(gesture) for gesture in GESTURES]))
 
-    cm = confusion_matrix(y_test_decoded, predictions)
-    plt.figure(figsize=(10, 8))
-    sns.heatmap(cm, annot=True, fmt="d", xticklabels=[sanitize_gesture_name(gesture) for gesture in GESTURES], yticklabels=[sanitize_gesture_name(gesture) for gesture in GESTURES])
-    plt.title("Confusion Matrix")
-    plt.show()
+    cm = confusion_matrix(y_test_decoded, predictions)
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(cm, annot=True, fmt="d", xticklabels=[sanitize_gesture_name(gesture) for gesture in GESTURES], yticklabels=[sanitize_gesture_name(gesture) for gesture in GESTURES])
+    plt.title("Confusion Matrix")
+    plt.show()
 
-    model.save("gesture_model.keras")
-    print("Model saved as gesture_model.keras.")
+    model.save("gesture_model.keras")
+    print("Model saved as gesture_model.keras.")
 
 def get_user_choice():
-    print("\nChoose an option:")
+    print("\nChoose an option:")
 
 2. Realtime_recognition.py
 import cv2
@@ -215,166 +215,166 @@ from tensorflow.keras.applications import mobilenet_v2
 import queue
 
 GESTURES = [
-    "Bye",
-    "Hey can you please help me",
-    "Hey good job!",
-    "Hey I need some water",
-    "Hi how are you",
-    "I love you",
-    "What is your name",
-    "Yes I agree"
+    "Bye",
+    "Hey can you please help me",
+    "Hey good job!",
+    "Hey I need some water",
+    "Hi how are you",
+    "I love you",
+    "What is your name",
+    "Yes I agree"
 ]
 
 def display_prediction(frame, gesture, confidence):
-    """Display the prediction on the frame."""
-    cv2.putText(frame, f"Prediction: {gesture}, Confidence: {confidence:.2f}", (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+    """Display the prediction on the frame."""
+    cv2.putText(frame, f"Prediction: {gesture}, Confidence: {confidence:.2f}", (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
 
 def display_error(frame, error):
-    """Display an error message on the frame."""
-    cv2.putText(frame, f"Error: {error}", (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+    """Display an error message on the frame."""
+    cv2.putText(frame, f"Error: {error}", (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
 
 def display_gesture_history(frame, gesture_history):
-    """Display the gesture history on the frame."""
-    y_offset = 100
-    for g in gesture_history:
-        cv2.putText(frame, f"Prev: {g}", (10, y_offset), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
-        y_offset += 25
+    """Display the gesture history on the frame."""
+    y_offset = 100
+    for g in gesture_history:
+        cv2.putText(frame, f"Prev: {g}", (10, y_offset), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+        y_offset += 25
 
 def display_confidence_threshold(frame, confidence_threshold):
-    """Display the confidence threshold on the frame."""
-    cv2.putText(frame, f"Conf: {confidence_threshold:.2f}", (450, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+    """Display the confidence threshold on the frame."""
+    cv2.putText(frame, f"Conf: {confidence_threshold:.2f}", (450, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
 
 def speech_worker(engine, speech_queue):
-    """Worker function to process speech requests from the queue."""
-    while True:
-        text = speech_queue.get()
-        if text is None:  # Sentinel value to stop the thread
-            break
-        engine.say(text)
-        engine.runAndWait()
-        speech_queue.task_done()
+    """Worker function to process speech requests from the queue."""
+    while True:
+        text = speech_queue.get()
+        if text is None:  # Sentinel value to stop the thread
+            break
+        engine.say(text)
+        engine.runAndWait()
+        speech_queue.task_done()
 
 def main():
-    cap = cv2.VideoCapture(0)
-    engine = pyttsx3.init()
-    engine.setProperty("rate", 180)
-    engine.setProperty("volume", 0.9)
-    verbose_mode = False
-    confidence_threshold = 0.5
-    gesture_history = []
-    last_gesture = None
-    last_gesture_time = 0
-    gesture_hold_duration = 2
+    cap = cv2.VideoCapture(0)
+    engine = pyttsx3.init()
+    engine.setProperty("rate", 180)
+    engine.setProperty("volume", 0.9)
+    verbose_mode = False
+    confidence_threshold = 0.5
+    gesture_history = []
+    last_gesture = None
+    last_gesture_time = 0
+    gesture_hold_duration = 2
 
-    # Create a queue for speech requests
-    speech_queue = queue.Queue()
-    # Start the speech worker thread
-    speech_thread = threading.Thread(target=speech_worker, args=(engine, speech_queue))
-    speech_thread.start()
+    # Create a queue for speech requests
+    speech_queue = queue.Queue()
+    # Start the speech worker thread
+    speech_thread = threading.Thread(target=speech_worker, args=(engine, speech_queue))
+    speech_thread.start()
 
-    try:
-        model = tf.keras.models.load_model("gesture_model.keras")
-    except FileNotFoundError:
-        print("Model file 'gesture_model.keras' not found. Please train the model first.")
-        return
+    try:
+        model = tf.keras.models.load_model("gesture_model.keras")
+    except FileNotFoundError:
+        print("Model file 'gesture_model.keras' not found. Please train the model first.")
+        return
 
-    # Initialize MediaPipe Hand Landmarker
-    base_options = python.BaseOptions(model_asset_path='hand_landmarker.task')
-    options = vision.HandLandmarkerOptions(base_options=base_options, num_hands=1)
-    hand_landmarker = vision.HandLandmarker.create_from_options(options)
+    # Initialize MediaPipe Hand Landmarker
+    base_options = python.BaseOptions(model_asset_path='hand_landmarker.task')
+    options = vision.HandLandmarkerOptions(base_options=base_options, num_hands=1)
+    hand_landmarker = vision.HandLandmarker.create_from_options(options)
 
-    while True:
-        try:
-            # Read a frame from the camera
-            ret, frame = cap.read()
-            if not ret:
-                break
+    while True:
+        try:
+            # Read a frame from the camera
+            ret, frame = cap.read()
+            if not ret:
+                break
 
-            frame_resized = cv2.resize(frame, (224, 224))
-            frame_rgb = cv2.cvtColor(frame_resized, cv2.COLOR_BGR2RGB)
-            frame_preprocessed = mobilenet_v2.preprocess_input(frame_rgb)
+            frame_resized = cv2.resize(frame, (224, 224))
+            frame_rgb = cv2.cvtColor(frame_resized, cv2.COLOR_BGR2RGB)
+            frame_preprocessed = mobilenet_v2.preprocess_input(frame_rgb)
 
-            frame_np = np.expand_dims(frame_preprocessed, axis=0)
+            frame_np = np.expand_dims(frame_preprocessed, axis=0)
 
-            # Perform gesture recognition
-            prediction = model.predict(frame_np)
-            gesture_index = np.argmax(prediction)
-            gesture = GESTURES[gesture_index]
-            confidence = prediction[0][gesture_index]
+            # Perform gesture recognition
+            prediction = model.predict(frame_np)
+            gesture_index = np.argmax(prediction)
+            gesture = GESTURES[gesture_index]
+            confidence = prediction[0][gesture_index]
 
-            if confidence > confidence_threshold:
-                current_time = time.time()
-                if gesture == last_gesture and current_time - last_gesture_time >= gesture_hold_duration:
-                    if last_gesture != "":
-                        # Add the gesture text to the speech queue
-                        speech_queue.put(gesture)
-                        last_gesture = ""
-                        gesture_history.insert(0, gesture)
-                        if len(gesture_history) > 5:
-                            gesture_history.pop()
+            if confidence > confidence_threshold:
+                current_time = time.time()
+                if gesture == last_gesture and current_time - last_gesture_time >= gesture_hold_duration:
+                    if last_gesture != "":
+                        # Add the gesture text to the speech queue
+                        speech_queue.put(gesture)
+                        last_gesture = ""
+                        gesture_history.insert(0, gesture)
+                        if len(gesture_history) > 5:
+                            gesture_history.pop()
 
-                elif gesture != last_gesture:
-                    last_gesture = gesture
-                    last_gesture_time = current_time
+                elif gesture != last_gesture:
+                    last_gesture = gesture
+                    last_gesture_time = current_time
 
-            # Display the prediction
-            display_prediction(frame, gesture, confidence)
+            # Display the prediction
+            display_prediction(frame, gesture, confidence)
 
-            # Display the gesture history
-            display_gesture_history(frame, gesture_history)
+            # Display the gesture history
+            display_gesture_history(frame, gesture_history)
 
-            # Display the confidence threshold
-            display_confidence_threshold(frame, confidence_threshold)
+            # Display the confidence threshold
+            display_confidence_threshold(frame, confidence_threshold)
 
-            # Detect hand landmarks
-            mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame_rgb)
-            results = hand_landmarker.detect(mp_image)
+            # Detect hand landmarks
+            mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame_rgb)
+            results = hand_landmarker.detect(mp_image)
 
-            if results.hand_landmarks:
-                for hand_landmarks_list in results.hand_landmarks:
-                    for landmark in hand_landmarks_list:
-                        # Draw landmarks on the frame using OpenCV
-                        x = int(landmark.x * frame.shape[1])
-                        y = int(landmark.y * frame.shape[0])
-                        cv2.circle(frame, (x, y), 5, (0, 255, 0), -1)  # Draw a circle for each landmark
+            if results.hand_landmarks:
+                for hand_landmarks_list in results.hand_landmarks:
+                    for landmark in hand_landmarks_list:
+                        # Draw landmarks on the frame using OpenCV
+                        x = int(landmark.x * frame.shape[1])
+                        y = int(landmark.y * frame.shape[0])
+                        cv2.circle(frame, (x, y), 5, (0, 255, 0), -1)  # Draw a circle for each landmark
 
-            if verbose_mode:
-                print(f"Prediction: {gesture}, Confidence: {confidence:.2f}")
+            if verbose_mode:
+                print(f"Prediction: {gesture}, Confidence: {confidence:.2f}")
 
-        except (ValueError, IndexError, TypeError) as e:
-            # Display an error message
-            display_error(frame, e)
+        except (ValueError, IndexError, TypeError) as e:
+            # Display an error message
+            display_error(frame, e)
 
-        # Display the frame
-        cv2.imshow("Gesture Recognition", frame)
+        # Display the frame
+        cv2.imshow("Gesture Recognition", frame)
 
-        # Handle keyboard input
-        key = cv2.waitKey(1) & 0xFF
-        if key == ord('q'):
-            break
-        elif key == ord('v'):
-            verbose_mode = not verbose_mode
-            print(f"Verbose mode: {verbose_mode}")
-        elif key == ord('c'):
-            gesture_history.clear()
-        elif key == ord('a'):
-            confidence_threshold = min(0.95, confidence_threshold + 0.05)
-            print(f"Confidence threshold: {confidence_threshold:.2f}")
-        elif key == ord('s'):
-            confidence_threshold = max(0.5, confidence_threshold - 0.05)
-            print(f"Confidence threshold: {confidence_threshold:.2f}")
+        # Handle keyboard input
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('q'):
+            break
+        elif key == ord('v'):
+            verbose_mode = not verbose_mode
+            print(f"Verbose mode: {verbose_mode}")
+        elif key == ord('c'):
+            gesture_history.clear()
+        elif key == ord('a'):
+            confidence_threshold = min(0.95, confidence_threshold + 0.05)
+            print(f"Confidence threshold: {confidence_threshold:.2f}")
+        elif key == ord('s'):
+            confidence_threshold = max(0.5, confidence_threshold - 0.05)
+            print(f"Confidence threshold: {confidence_threshold:.2f}")
 
-    # Release resources
-    cap.release()
-    cv2.destroyAllWindows()
+    # Release resources
+    cap.release()
+    cv2.destroyAllWindows()
 
-    # Stop the speech worker thread
-    speech_queue.put(None)  # Sentinel value to stop the thread
-    speech_thread.join()
-    engine.stop()
+    # Stop the speech worker thread
+    speech_queue.put(None)  # Sentinel value to stop the thread
+    speech_thread.join()
+    engine.stop()
 
 if __name__ == "__main__":
-    main()
+    main()
 
 3.Speech_recognition.py
 import speech_recognition as sr
@@ -383,103 +383,107 @@ import queue
 import time
 
 class VoiceToTextConverter:
-    def __init__(self, language="en-US"):
-        self.recognizer = sr.Recognizer()
-        self.language = language
-        self.running = False
-        self.audio_queue = queue.Queue()
-        self.text_queue = queue.Queue()
-        self.error_queue = queue.Queue()
-        self.thread = None
+    def __init__(self, language="en-US"):
+        self.recognizer = sr.Recognizer()
+        self.language = language
+        self.running = False
+        self.audio_queue = queue.Queue()
+        self.text_queue = queue.Queue()
+        self.error_queue = queue.Queue()
+        self.thread = None
 
-    def start(self):
-        """Starts the voice-to-text conversion process in a separate thread."""
-        if self.running:
-            return  # Prevent starting if already running
-        self.running = True
-        self.thread = threading.Thread(target=self._process_audio)
-        self.thread.daemon = True  # Allows program to exit even if thread is running
-        self.thread.start()
+    def start(self):
+        """Starts the voice-to-text conversion process in a separate thread."""
+        if self.running:
+            return  # Prevent starting if already running
+        self.running = True
+        self.thread = threading.Thread(target=self._process_audio)
+        self.thread.daemon = True  # Allows program to exit even if thread is running
+        self.thread.start()
 
-    def stop(self):
-        """Stops the voice-to-text conversion process."""
-        if not self.running:
-            return
-        self.running = False
-        if self.thread and self.thread.is_alive():
-            self.thread.join()  # Wait for the thread to finish
+    def stop(self):
+        """Stops the voice-to-text conversion process."""
+        if not self.running:
+            return
+        self.running = False
+        if self.thread and self.thread.is_alive():
+            self.thread.join()  # Wait for the thread to finish
 
-    def _process_audio(self):
-        """Internal method to process audio from the queue and convert to text."""
-        while self.running:
-            try:
-                audio = self.audio_queue.get(timeout=1)  # Get audio from queue, timeout after 1 second
-                try:
-                    text = self.recognizer.recognize_google(audio, language=self.language)  # type: ignore
-                    self.text_queue.put(text)
-                except sr.UnknownValueError:
-                    self.error_queue.put("Speech Recognition could not understand audio")
-                except sr.RequestError as e:
-                    self.error_queue.put(f"Could not request results from Google Speech Recognition service; {e}")
-                except Exception as e:
-                    self.error_queue.put(f"An unexpected error occurred during speech recognition: {e}")
+    def _process_audio(self):
+        """Internal method to process audio from the queue and convert to text."""
+        while self.running:
+            try:
+                audio = self.audio_queue.get(timeout=1)  # Get audio from queue, timeout after 1 second
+                try:
+                    text = self.recognizer.recognize_google(audio, language=self.language)  # type: ignore
+                    self.text_queue.put(text)
+                except sr.UnknownValueError:
+                    self.error_queue.put("Speech Recognition could not understand audio")
+                except sr.RequestError as e:
+                    self.error_queue.put(f"Could not request results from Google Speech Recognition service; {e}")
+                except Exception as e:
+                    self.error_queue.put(f"An unexpected error occurred during speech recognition: {e}")
 
-                self.audio_queue.task_done()
-            except queue.Empty:
-                pass # Continue if queue is empty (timeout)
-            except Exception as e:
-                self.error_queue.put(f"An unexpected error occurred in the audio processing thread: {e}")
-                self.running = False #stop the thread if major error occured.
+                self.audio_queue.task_done()
+            except queue.Empty:
+                pass # Continue if queue is empty (timeout)
+            except Exception as e:
+                self.error_queue.put(f"An unexpected error occurred in the audio processing thread: {e}")
+                self.running = False #stop the thread if major error occured.
 
-    def capture_audio(self, source):
-        """Captures audio from the given source and adds it to the queue."""
-        try:
-            audio = self.recognizer.listen(source, timeout=5) # Listen for a max of 5 seconds.
-            self.audio_queue.put(audio)
+    def capture_audio(self, source):
+        """Captures audio from the given source and adds it to the queue."""
+        try:
+            audio = self.recognizer.listen(source, timeout=5) # Listen for a max of 5 seconds.
+            self.audio_queue.put(audio)
 
-        except sr.WaitTimeoutError:
-            self.error_queue.put("Audio capture timed out.")
-        except Exception as e:
-            self.error_queue.put(f"An error occurred during audio capture: {e}")
+        except sr.WaitTimeoutError:
+            self.error_queue.put("Audio capture timed out.")
+        except Exception as e:
+            self.error_queue.put(f"An error occurred during audio capture: {e}")
 
-    def get_text(self, block=False, timeout=None):
-        """Retrieves text from the queue. Returns None if no text is available."""
-        try:
-            return self.text_queue.get(block=block, timeout=timeout)
-        except queue.Empty:
-            return None
+    def get_text(self, block=False, timeout=None):
+        """Retrieves text from the queue. Returns None if no text is available."""
+        try:
+            return self.text_queue.get(block=block, timeout=timeout)
+        except queue.Empty:
+            return None
 
-    def get_error(self, block=False, timeout=None):
-        """Retrieves errors from the queue. Returns None if no errors are available."""
-        try:
-            return self.error_queue.get(block=block, timeout=timeout)
-        except queue.Empty:
-            return None
+    def get_error(self, block=False, timeout=None):
+        """Retrieves errors from the queue. Returns None if no errors are available."""
+        try:
+            return self.error_queue.get(block=block, timeout=timeout)
+        except queue.Empty:
+            return None
 
 # Example usage:
 if __name__ == "__main__":
-    converter = VoiceToTextConverter()
-    converter.start()
+    converter = VoiceToTextConverter()
+    converter.start()
 
-    with sr.Microphone() as source:
-        print("Say something!")
-        for _ in range(5): # capture 5 audio clips.
-            converter.capture_audio(source)
-            time.sleep(0.5) # Wait a bit before capturing next audio.
+    with sr.Microphone() as source:
+        print("Say something!")
+        for _ in range(5): # capture 5 audio clips.
+            converter.capture_audio(source)
+            time.sleep(0.5) # Wait a bit before capturing next audio.
 
-            text = converter.get_text()
-            error = converter.get_error()
+            text = converter.get_text()
+            error = converter.get_error()
 
-            if text:
-                print(f"You said: {text}")
-            if error:
-                print(f"Error: {error}")
+            if text:
+                print(f"You said: {text}")
+            if error:
+                print(f"Error: {error}")
 
-    converter.stop()
-    print("Voice-to-text conversion stopped.")
+    converter.stop()
+    print("Voice-to-text conversion stopped.")
 
 deveop interface using html, style it with css and js and use other langueages whatever you feel necessary
 ad backgruond colour to web page aling all buttons at center of webpage with proper alignement between all the buttons
-
-
-
+create separate files for frontend using
+1.html
+2.css
+3.javascript (js)
+create backend files for python code to integrate Realtime_recognition.py
+train.py , speech_recognition.py and clear_cache.py and intergratee this file with flask api to to integrate them eith front end
+give proper file name to save and specify the format of project directory
