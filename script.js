@@ -1,39 +1,52 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const folderContents = document.getElementById('folderContents');
+// Get modal elements
+const trainModal = document.getElementById("trainModal");
+const recognizeModal = document.getElementById("recognizeModal");
+const listenModal = document.getElementById("listenModal");
 
-    // Function to load folder contents dynamically
-    function loadFolderContents() {
-        // Simulated folder contents (replace with actual data fetching)
-        const files = ['file1.jpg', 'file2.png', 'file3.pdf']; // Example files
+// Get buttons
+const trainBtn = document.getElementById("trainBtn");
+const recognizeBtn = document.getElementById("recognizeBtn");
+const listenBtn = document.getElementById("listenBtn");
+const clearCacheBtn = document.getElementById("clearCacheBtn");
 
-        folderContents.innerHTML = ''; // Clear existing contents
+// Get close buttons
+const closeTrainModal = document.getElementById("closeTrainModal");
+const closeRecognizeModal = document.getElementById("closeRecognizeModal");
+const closeListenModal = document.getElementById("closeListenModal");
 
-        files.forEach(file => {
-            const fileItem = document.createElement('div');
-            fileItem.className = 'file-item';
-            fileItem.innerHTML = `
-                <input type="checkbox" class="file-checkbox" value="${file}">
-                <span>${file}</span>
-            `;
-            folderContents.appendChild(fileItem);
-        });
-    }
-
-    // Event listeners for action buttons
-    document.getElementById('uploadButton').addEventListener('click', () => {
-        alert('Upload functionality to be implemented.');
-    });
-
-    document.getElementById('deleteButton').addEventListener('click', () => {
-        const checkboxes = document.querySelectorAll('.file-checkbox:checked');
-        checkboxes.forEach(checkbox => {
-            checkbox.parentElement.remove(); // Remove the file item from the UI
-        });
-        alert('Delete functionality to be implemented.');
-    });
-
-    document.getElementById('refreshButton').addEventListener('click', loadFolderContents);
-
-    // Initial load of folder contents
-    loadFolderContents();
+// Open modals on button click
+trainBtn.addEventListener("click", () => {
+    trainModal.style.display = "block";
 });
+
+recognizeBtn.addEventListener("click", () => {
+    recognizeModal.style.display = "block";
+});
+
+listenBtn.addEventListener("click", () => {
+    listenModal.style.display = "block";
+});
+
+// Close modals when the close button is clicked
+closeTrainModal.addEventListener("click", () => {
+    trainModal.style.display = "none";
+});
+
+closeRecognizeModal.addEventListener("click", () => {
+    recognizeModal.style.display = "none";
+});
+
+closeListenModal.addEventListener("click", () => {
+    listenModal.style.display = "none";
+});
+
+// Function to clear cache
+clearCacheBtn.addEventListener("click", () => {
+    if (confirm("Are you sure you want to clear the cache?")) {
+        // Simulate cache clearing process
+        alert("Cache cleared successfully!");
+    }
+});
+
+// You can extend this by adding the functionalities of each button based on your backend and API calls
+
