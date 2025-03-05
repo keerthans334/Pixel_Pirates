@@ -1,0 +1,32 @@
+create an interactive dynamic web interface for my project handspeak which translates hand gestures into speech and voice recognition into text in realtime ..
+the main web page must contain  action buttons 
+1. train 
+when i click this button new web page must open it should show all the gestures which are trained and it should show the option 
+1.1  train model with already saved gestures 
+1.2 change gesture images for the saved gestures
+1.3  add new gestures and train them (each gesture must be trained with 100 gesture images and it should show the count of gestures that are trained at bellow)
+ once the user click option 1.1 or 1.3 it should open gesture capture window and below it should prompt three option
+a. delete the last captured image and hence train it again
+b. see the last captured gestured gesture image
+c. (after training all the gestures quit)
+once the model is trained it should the the accuracy of trained model and display the confusion matrix the web  page must contain move back button at top to jump back to the main web page
+at last once the gesture is trained it should display the gestures are trained succesfully
+2. realtime recognition (convey)
+when the user clicks this button a new web page must open it should open the display window it should contain an button called start recognition when th user clicks it the gesture recofnition window will open it will capture the hand gesture and fetch the data from pre-trained directory for which the gestures are trained using train model it will match the hand gestures from trained gesture directory and translate that hand gesture into text paralley speaking out the gesture the text will be displayed below
+when its executed it will display the confidence threshould of the gesture beow it shoud contain options buttons like
+a. increase confidence threshould
+b. decrease confidence threshould
+c. switch to verbose mode
+d. displly the history of gestures recognised
+the web  page must contain move back button at top to jump back to the main web page
+3. speech recognition ( listen)
+   when the user clicks this button a new web page must obtain it should prompt a button called speak when the user prees this button it should take the voice input and convert it to text and display below
+when the voice is not audible it sholud prompt speak again not audible 
+the web  page must contain move back button at top to jump back to the main web page
+4. clear cache
+when the user clicks this buttons it will remove all the cache files from project directory and make it efficient
+no need to create new web page for this..
+it should show the amount of cache files gathered and ask user for reconfirmation to clear the gathered cache files 
+ahter clearing it should display the size of cache files deleated
+
+
