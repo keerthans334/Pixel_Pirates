@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Handspeak Interface</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="main-container">
+        <h1>Handspeak - Gesture to Speech and Speech to Text</h1>
+        <div class="buttons-container">
+            <button class="action-btn" id="trainBtn">Train</button>
+            <button class="action-btn" id="recognizeBtn">Real-Time Recognition (Convey)</button>
+            <button class="action-btn" id="listenBtn">Speech Recognition (Listen)</button>
+            <button class="action-btn" id="clearCacheBtn">Clear Cache</button>
+        </div>
+    </div>
+
+    <!-- Modal windows for training and other features -->
+    <div class="modal" id="trainModal">
+        <div class="modal-content">
+            <span class="close-btn" id="closeTrainModal">&times;</span>
+            <h2>Train Gestures</h2>
+            <button id="trainWithSavedGestures">Train with Saved Gestures</button>
+            <button id="addNewGestures">Add New Gestures</button>
+        </div>
+    </div>
+
+    <div class="modal" id="recognizeModal">
+        <div class="modal-content">
+            <span class="close-btn" id="closeRecognizeModal">&times;</span>
+            <h2>Real-Time Gesture Recognition</h2>
+            <button id="startRecognitionBtn">Start Recognition</button>
+            <div id="gestureHistory"></div>
+        </div>
+    </div>
+
+    <div class="modal" id="listenModal">
+        <div class="modal-content">
+            <span class="close-btn" id="closeListenModal">&times;</span>
+            <h2>Speech Recognition</h2>
+            <button id="speakBtn">Speak</button>
+            <div id="speechText"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
